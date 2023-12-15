@@ -1,0 +1,69 @@
+version: '1' # On spécifie la version de docker-compose
+services:
+  mariadb:  # On ajoute un service mariadb qui va être notre base de données
+    image: mariadb # L'image que l'on va utiliser c'est mariadb
+    restart: always # On redémarre le service à chaque fois si il y a un problème
+    environment: # On définit les variables d'environnement pour la connexion à la base de données
+      MYSQL_ROOT_PASSWORD: esgipwd
+      MYSQL_DATABASE: esgi
+      MYSQL_USER: esgi
+      MYSQL_PASSWORD: esgipwd
+    volumes: # On définit un volume pour enregistrer les données de la base de données et à chaque fois que l'on va redémarrer le service, les données seront toujours là
+      - ./.mariadb:/var/lib/mariadb
+
+  traefik: # On ajoute un service traefik qui va être notre reverse proxy
+    image: traefik:v2.5 # L'image que l'on va utiliser c'est traefik et on spécifie la version
+    command: # On définit les commandes que l'on va utiliser pour le service
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports: # On expose le port 8080 pour accéder à l'interface de traefik
+      - "8003:8080"
+    volumes: # On définit un volume pour communiquer avec le docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: # On veut que le service traefik attende que les services mariadb et web soient lancés
+      - web
+      - web2
+
+  web: # On ajoute un service web qui va être notre premier serveur web
+    build: # On définit le build du service qui va être notre Dockerfile
+      context: .
+      dockerfile: Dockerfile
+    labels: # On définit les labels pour le service traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`web.localhost`)"
+      - "traefik.http.routers.web.entrypoints=web"
+    environment: # On définit les variables d'environnement pour le serveur web, c'est à dire le nom du serveur web qui va être affiché sur la page de registre
+      - SERVER_WEB_NAME="SERVEUR 1"
+    ports: # On expose le port 8001 pour accéder au serveur web
+      - "8001:80"
+    depends_on: # On veut que le service web attende que le service mariadb soit lancé
+      - mariadb
+  
+  web2: # On fait la même chose pour le deuxième serveur web
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web2.rule=Host(`web2.localhost`)"
+      - "traefik.http.routers.web2.entrypoints=web"
+    environment:
+      - SERVER_WEB_NAME="SERVEUR 2" # On met un autre nom pour le deuxième serveur web
+    ports:
+      - "8002:80" # On expose un autre port pour le deuxième serveur web
+    depends_on: # Et on veut aussi attendre que le service mariadb soit lancé
+      - mariadb
+
+  phpmyadmin: # On ajoute un service phpmyadmin qui va être notre interface pour la base de données
+    image: phpmyadmin # On part de l'image phpmyadmin
+    restart: always 
+    environment: # On définit les variables d'environnement
+      PMA_HOST: mariadb
+      PMA_USER: esgi
+      PMA_PASSWORD: esgipwd
+    ports:
+      - "8080:80" # On expose le port 8080 pour accéder
+    depends_on: # On attend aussi que le service mariadb soit lancé
+      - mariadb 

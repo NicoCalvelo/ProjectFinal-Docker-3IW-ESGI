@@ -35,7 +35,7 @@ services:
       - "traefik.http.routers.web.rule=Host(`web.localhost`)"
       - "traefik.http.routers.web.entrypoints=web"
     environment: # On définit les variables d'environnement pour le serveur web, c'est à dire le nom du serveur web qui va être affiché sur la page de registre
-      - SERVER_WEB_NAME="SERVEUR 1"
+      - SERVER_WEB_NAME=SERVEUR 1
     ports: # On expose le port 8001 pour accéder au serveur web
       - "8001:80"
     depends_on: # On veut que le service web attende que le service mariadb soit lancé
@@ -50,7 +50,7 @@ services:
       - "traefik.http.routers.web2.rule=Host(`web2.localhost`)"
       - "traefik.http.routers.web2.entrypoints=web"
     environment:
-      - SERVER_WEB_NAME="SERVEUR 2" # On met un autre nom pour le deuxième serveur web
+      - SERVER_WEB_NAME=SERVEUR 2 # On met un autre nom pour le deuxième serveur web
     ports:
       - "8002:80" # On expose un autre port pour le deuxième serveur web
     depends_on: # Et on veut aussi attendre que le service mariadb soit lancé

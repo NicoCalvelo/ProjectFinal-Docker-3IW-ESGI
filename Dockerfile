@@ -31,9 +31,14 @@ RUN npm install
 # On crée la clé de l'application
 RUN php artisan key:generate
 
+# install dos2unix
+RUN apk add dos2unix
+
 # On crée le lien symbolique pour les commandes qu'on va lancer plus tard
 COPY setup.sh /setup.sh
 # On donne les droits d'execution au fichier
-RUN chmod +x /setup.sh
+RUN chmod 755 /setup.sh
+
+RUN dos2unix /setup.sh
 # On appel le fichier setup.sh qui va lancer les commandes à chaque fois qu'on va lancer le container
 CMD ["/setup.sh"]
